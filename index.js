@@ -1,6 +1,7 @@
 // index.js
 const cryptoJs = require('crypto-js');
 const { io } = require('socket.io-client');
+require('dotenv').config();
 
 function generateRSAKeyPair() {
   const keyPair = cryptoJs.lib.WordArray.random(32);
@@ -13,12 +14,11 @@ class Fullmetal {
   constructor(config) {
     this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
     this._config = config;
-    this.socket = io('http://localhost:5000');
+    this.socket = io(process.env.API_SERVER);
     // this.performKeyExchange();
   }
   performKeyExchange() {
     const keyPair = generateRSAKeyPair();
-    console.log(21, 'agent', keyPair);
     this.socket.on('clientPublicKey', (clientPublicKey) => {
       this.clientPublicKey = cryptoJs.enc.Utf8.parse(clientPublicKey);
       this.socket.emit('agentPublicKey', keyPair.publicKey);
@@ -76,7 +76,6 @@ class Fullmetal {
     // this.socket.on('prompt', (prompt) => {
     //   cb(this.decrypt(prompt));
     // });
-    console.log(cb);
     this.socket.on('prompt', cb);
   }
 
