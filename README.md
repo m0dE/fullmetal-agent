@@ -8,7 +8,8 @@ const Fullmetal = require("fullmetal-agent");
 const config = {   
     model: "TheBloke/Llama-2-7B-fp16", // full name provided in hugging face including the creator's name
     name: "my 30B LLM", // Optional. This name will be registered in api.fullmetal.ai
-    contextLength: 30 // context length in thousands. 30 here is 30k.
+    contextLength: 30, // context length in thousands. 30 here is 30k.
+    acceptPublicPrompts: true // answer public prompts and earn mystery gems
 };
 
 const fullmetalAgent = new Fullmetal(config);
