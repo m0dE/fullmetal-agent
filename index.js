@@ -14,7 +14,7 @@ class Fullmetal {
   constructor(config) {
     this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
     this._config = config;
-    this.socket = io('https://45.76.169.148/', {
+    this.socket = io('https://api.fullmetal.ai/', {
       path: '/socket.io/',
       forceNew: true,
       reconnectionAttempts: 3,
@@ -80,18 +80,12 @@ class Fullmetal {
   }
 
   onPrompt(cb) {
-    // this.socket.on('prompt', (prompt) => {
-    //   cb(this.decrypt(prompt));
-    // });
     this.socket.on('prompt', cb);
   }
 
-  sendResponse(answer, completed) {
-    // const payload = {
-    //   choices: [{ text: this.encrypt(answer) }],
-    // };
+  sendResponse(response, completed) {
     const payload = {
-      choices: [{ text: answer }],
+      response,
       completed,
     };
     this.socket.emit('response', payload);
