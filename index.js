@@ -1,7 +1,7 @@
 // index.js
 const cryptoJs = require('crypto-js');
 const { io } = require('socket.io-client');
-require('dotenv').config();
+const config = require('./config');
 
 function generateRSAKeyPair() {
   const keyPair = cryptoJs.lib.WordArray.random(32);
@@ -10,18 +10,35 @@ function generateRSAKeyPair() {
     privateKey: keyPair.toString(),
   };
 }
-class Fullmetal {
-  constructor(config) {
-    this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
-    this._config = config;
-    this.socket = io('https://api.fullmetal.ai/', {
-      path: '/socket.io/',
-      forceNew: true,
-      reconnectionAttempts: 3,
-      timeout: 2000,
-      rejectUnauthorized: false,
-    });
 
+class Fullmetal {
+  constructor(options) {
+    if (!options)
+      throw new Error(
+        'Missing Configuration: You need to provide a apikey, model and agent name'
+      );
+
+    if (options) {
+      if (!options.apiKey) {
+        throw new Error('Missing Configuration: apiKey is required');
+      }
+      if (!options.model) {
+        throw new Error('Missing Configuration: model is required');
+      }
+      this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
+      this.socket = io(config.APIURL, {
+        path: '/socket.io/',
+        forceNew: true,
+        reconnectionAttempts: 3,
+        timeout: 2000,
+        rejectUnauthorized: false,
+      });
+      this.authenticate({ userType: 'agent', options });
+      this.isReady(true);
+      this.onError((error) => {
+        console.log(error);
+      });
+    }
     // this.performKeyExchange();
   }
   performKeyExchange() {
@@ -67,16 +84,8 @@ class Fullmetal {
     return decryptedData;
   }
 
-  async setApiKey(apikey) {
-    this._apiKey = apikey;
-    this.authenticate('agent', {
-      apiKey: this._apiKey,
-      name: this._config.name,
-    });
-  }
-
-  authenticate(userType, credentials) {
-    this.socket.emit('authenticate', { userType, credentials });
+  authenticate(data) {
+    this.socket.emit('authenticate', data);
   }
 
   onPrompt(cb) {
@@ -89,9 +98,19 @@ class Fullmetal {
       completed,
     };
     this.socket.emit('response', payload);
+    if (completed) {
+      this.isReady(true);
+    }
+  }
+  isReady(status) {
+    console.log(107, status);
+    this.socket.emit('agentIsReady', status);
   }
   onError(cb) {
-    this.socket.on('error', cb);
+    this.socket.on('error', (error) => {
+      cb(error);
+      throw new Error(error);
+    });
   }
 }
 module.exports = Fullmetal;
