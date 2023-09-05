@@ -22,8 +22,8 @@ class Fullmetal {
       if (!options.apiKey) {
         throw new Error('Missing Configuration: apiKey is required');
       }
-      if (!options.model) {
-        throw new Error('Missing Configuration: model is required');
+      if (!options.models) {
+        throw new Error('Missing Configuration: models are required');
       }
       this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
       this.socket = io(config.APIURL, {
@@ -103,7 +103,6 @@ class Fullmetal {
     }
   }
   isReady(status) {
-    console.log(107, status);
     this.socket.emit('agentIsReady', status);
   }
   onError(cb) {
