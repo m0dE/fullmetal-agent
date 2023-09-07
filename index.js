@@ -52,10 +52,19 @@ class Fullmetal {
         console.error('Reconnection error:', error);
       });
 
-      this.authenticate({ userType: 'agent', options });
-      this.isReady(true);
-      this.onError((error) => {
-        console.log(error);
+      this.socket.on('connect', (socket) => {
+        this.authenticate({ userType: 'agent', options });
+        this.isReady(true);
+        this.onError((error) => {
+          console.log(error);
+        });
+      });
+
+      setInterval(() => {
+        this.socket.emit('ping', new Date());
+      }, 10000);
+      this.socket.on('pong', (data) => {
+        // console.log('Pong at', this.socket.id, data);
       });
     }
     // this.performKeyExchange();
@@ -111,13 +120,10 @@ class Fullmetal {
     this.socket.on('prompt', cb);
   }
 
-  sendResponse(response, completed) {
-    const payload = {
-      response,
-      completed,
-    };
-    this.socket.emit('response', payload);
-    if (completed) {
+  sendResponse(response) {
+    // response= {token:'', completed:false, speed:10, model:''Wizard-Vicuna-7B-Uncensored'}
+    this.socket.emit('response', response);
+    if (response.completed) {
       this.isReady(true);
     }
   }
