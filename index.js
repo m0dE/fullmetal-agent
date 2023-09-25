@@ -133,7 +133,8 @@ class Fullmetal {
   onError(cb) {
     this.socket.on('error', (error) => {
       cb(error);
-      throw new Error(error);
+      //throw new Error(error);
+      console.log(error);
     });
   }
 }
