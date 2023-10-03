@@ -67,6 +67,10 @@ class Fullmetal {
         // console.log('Pong at', this.socket.id, data);
       });
     }
+
+    this.socket.on('disconnect', (socket) => {
+      console.log(`Disconnected from ${socket.id}`);
+    });
     // this.performKeyExchange();
   }
   performKeyExchange() {
