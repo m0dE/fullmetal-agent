@@ -4,73 +4,85 @@ const { io } = require('socket.io-client');
 const config = require('./config');
 
 function generateRSAKeyPair() {
-  const keyPair = cryptoJs.lib.WordArray.random(32);
-  return {
-    publicKey: keyPair.toString(),
-    privateKey: keyPair.toString(),
-  };
+  try {
+    const keyPair = cryptoJs.lib.WordArray.random(32);
+    return {
+      publicKey: keyPair.toString(),
+      privateKey: keyPair.toString(),
+    };
+  } catch (error) {
+    console.error('An error occurred:', error);
+    config.rollbar.error(error);
+  }
 }
-
 class Fullmetal {
   constructor(options) {
-    if (!options)
-      throw new Error(
-        'Missing Configuration: You need to provide a apikey, model and agent name'
-      );
+    try {
+      if (!options)
+        throw new Error(
+          'Missing Configuration: You need to provide a apikey, model and agent name'
+        );
 
-    if (options) {
-      if (!options.apiKey) {
-        throw new Error('Missing Configuration: apiKey is required');
-      }
-      if (!options.models) {
-        throw new Error('Missing Configuration: models are required');
-      }
-      this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
-      this.socket = io(config.APIURL, {
-        transports: ['websocket'],
-        upgrade: false,
-        path: '/socket.io/',
-        forceNew: true,
-        reconnectionAttempts: 3,
-        timeout: 2000,
-        rejectUnauthorized: false,
-        reconnection: true,
-        reconnectionAttempts: 5, // Number of reconnection attempts
-        reconnectionDelay: 1000, // Initial delay between reconnection attempts (in milliseconds)
-        reconnectionDelayMax: 5000, // Maximum delay between reconnection attempts (in milliseconds)
-        randomizationFactor: 0.5, // Randomization factor for reconnection delay
-      });
-      this.socket.on('reconnect', (attemptNumber) => {
-        console.log(`Reconnected after ${attemptNumber} attempts`);
-      });
-
-      this.socket.on('reconnecting', (attemptNumber) => {
-        console.log(`Reconnecting attempt ${attemptNumber}`);
-      });
-
-      this.socket.on('reconnect_error', (error) => {
-        console.error('Reconnection error:', error);
-      });
-
-      this.socket.on('connect', (socket) => {
-        this.authenticate({ userType: 'agent', options });
-        this.isReady(true);
-        this.onError((error) => {
-          console.log(error);
+      if (options) {
+        if (!options.apiKey) {
+          throw new Error('Missing Configuration: apiKey is required');
+        }
+        if (!options.models) {
+          throw new Error('Missing Configuration: models are required');
+        }
+        this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
+        this.socket = io(config.APIURL, {
+          transports: ['websocket'],
+          upgrade: false,
+          path: '/socket.io/',
+          forceNew: true,
+          reconnectionAttempts: 3,
+          timeout: 2000,
+          rejectUnauthorized: false,
+          reconnection: true,
+          reconnectionAttempts: 5, // Number of reconnection attempts
+          reconnectionDelay: 1000, // Initial delay between reconnection attempts (in milliseconds)
+          reconnectionDelayMax: 5000, // Maximum delay between reconnection attempts (in milliseconds)
+          randomizationFactor: 0.5, // Randomization factor for reconnection delay
         });
-      });
+        this.socket.on('reconnect', (attemptNumber) => {
+          console.log(`Reconnected after ${attemptNumber} attempts`);
+        });
 
-      setInterval(() => {
-        this.socket.emit('ping', new Date());
-      }, 10000);
-      this.socket.on('pong', (data) => {
-        // console.log('Pong at', this.socket.id, data);
+        this.socket.on('reconnecting', (attemptNumber) => {
+          console.log(`Reconnecting attempt ${attemptNumber}`);
+        });
+
+        this.socket.on('reconnect_error', (error) => {
+          config.rollbar.error(error);
+          console.error('Reconnection error:', error);
+        });
+
+        this.socket.on('connect', (socket) => {
+          this.authenticate({ userType: 'agent', options });
+          this.isReady(true);
+          this.onError((error) => {
+            config.rollbar.error(error);
+            console.log(error);
+          });
+        });
+
+        setInterval(() => {
+          this.socket.emit('ping', new Date());
+        }, 10000);
+        this.socket.on('pong', (data) => {
+          // console.log('Pong at', this.socket.id, data);
+        });
+      }
+
+      this.socket.on('disconnect', (socket) => {
+        config.rollbar.info(` ${new Date()} - Disconnected from API server`);
+        console.log(` ${new Date()} - Disconnected from API server`);
       });
+    } catch (error) {
+      config.rollbar.error(error);
+      console.log(error);
     }
-
-    this.socket.on('disconnect', (socket) => {
-      console.log(` ${new Date()} - Disconnected from API server`);
-    });
     // this.performKeyExchange();
   }
   performKeyExchange() {
@@ -117,29 +129,56 @@ class Fullmetal {
   }
 
   authenticate(data) {
-    this.socket.emit('authenticate', data);
+    try {
+      this.socket.emit('authenticate', data);
+    } catch (error) {
+      config.rollbar.error(error);
+      console.log(error);
+    }
   }
-
   onPrompt(cb) {
-    this.socket.on('prompt', cb);
+    try {
+      this.socket.on('prompt', cb);
+    } catch (error) {
+      config.rollbar.error(error);
+      console.log(error);
+    }
   }
 
   sendResponse(response) {
-    // response= {token:'', completed:false, speed:10, model:''Wizard-Vicuna-7B-Uncensored'}
-    this.socket.emit('response', response);
-    if (response.completed) {
-      this.isReady(true);
+    try {
+      // response= {token:'', completed:false, speed:10, model:''Wizard-Vicuna-7B-Uncensored'}
+      this.socket.emit('response', response);
+      if (response.completed) {
+        this.isReady(true);
+      }
+    } catch (error) {
+      config.rollbar.error(error);
+      console.log(error);
     }
   }
+
   isReady(status) {
-    this.socket.emit('agentIsReady', status);
-  }
-  onError(cb) {
-    this.socket.on('error', (error) => {
-      cb(error);
-      //throw new Error(error);
+    try {
+      this.socket.emit('agentIsReady', status);
+    } catch (error) {
+      config.rollbar.error(error);
       console.log(error);
-    });
+    }
+  }
+
+  onError(cb) {
+    try {
+      this.socket.on('error', (error) => {
+        config.rollbar.error(error);
+        cb(error);
+        //throw new Error(error);
+        console.log(error);
+      });
+    } catch (error) {
+      config.rollbar.error(error);
+      console.log(error);
+    }
   }
 }
 module.exports = Fullmetal;
