@@ -69,7 +69,7 @@ class Fullmetal {
     }
 
     this.socket.on('disconnect', (socket) => {
-      console.log(`Disconnected from ${socket.id}`);
+      console.log(` ${new Date()} - Disconnected from API server`);
     });
     // this.performKeyExchange();
   }
