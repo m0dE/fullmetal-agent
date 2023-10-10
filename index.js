@@ -59,6 +59,11 @@ class Fullmetal {
         });
 
         this.socket.on('connect', (socket) => {
+          console.log(`*******************************************`);
+          console.log(
+            `Connected to API server with ${this.socket.id} socketId`
+          );
+          console.log(`*******************************************`);
           this.authenticate({ userType: 'agent', options });
           this.isReady(true);
           this.onError((error) => {
