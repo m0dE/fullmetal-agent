@@ -1,6 +1,6 @@
 {
   "name": "fullmetal-agent",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "This package is used to help Fullmetal API server with agents (nodes)",
   "main": "index.js",
   "scripts": {
@@ -16,13 +16,13 @@
   "author": "Fullmetal",
   "license": "ISC",
   "devDependencies": {
-    "@types/ip": "^1.1.2",
-    "ip": "^1.1.8",
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "@types/ip": "^1.1.2",
     "crypto-js": "^4.1.1",
     "dotenv": "^16.3.1",
+    "ip": "^1.1.8",
     "rollbar": "^2.26.2",
     "socket.io-client": "^4.7.1"
   }
