@@ -4,22 +4,35 @@
 ## Usage
 
 ```
-const Fullmetal = require("fullmetal-agent");
-const config = {   
-    model: "TheBloke/Llama-2-7B-fp16", // full name provided in hugging face including the creator's name
-    name: "my 30B LLM", // Optional. This name will be registered in api.fullmetal.ai
-    contextLength: 30, // context length in thousands. 30 here is 30k.
-    acceptPublicPrompts: true // answer public prompts and earn mystery gems
+
+const Fullmetal = require('fullmetal-agent');
+const modelList = [
+  {
+    name: process.env.MODEL_NAME,
+    file:  process.env.MODEL_FILE,
+  },
+];
+
+const fullMetalConfig = {
+  name: process.env.AGENT_NAME,
+  apiKey: process.env.FULLMETAL_API_KEY,
+  models: modelList.map((m) => m.name),
 };
 
-const fullmetalAgent = new Fullmetal(config);
-fullmetalAgent.setApiKey("API_KEY"); // api key api.fullmetal.ai
+const fullmetalAgent = new Fullmetal(fullMetalConfig);
+fullmetalAgent.onPrompt(async (data) => {
 
-// agent receives prompt from Fullmetal API
-fullmetalAgent.onPrompt(async (prompt) => {
-    // generate response and send it back to Fullmetal API
-    await getResponse(prompt, async (response, completed) => {
-        fullmetalAgent.sendResponse(response, completed);
-    }); 
+  await getApiResponse(data, async (response) => {
+    // response= {token:'', completed:false, speed:10, model:''Wizard-Vicuna-7B-Uncensored'}
+    fullmetalAgent.sendResponse(response);
+  });
 });
+
+const getApiResponse = async (data, cb) => {
+  // YOUR agent code to generate the resposne
+  // cb({ token: msg });
+};
 ```
+
+## DEMO
+Click [here](https://github.com/m0dE/fullmetal-agent-example) to see the sample code
