@@ -31,7 +31,9 @@ class Fullmetal {
         if (!options.models) {
           throw new Error('Missing Configuration: models are required');
         }
-        options.ipAddress = ip.address();
+        if (!options.ipAddress) {
+          options.ipAddress = ip.address();
+        }
         this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
         this.socket = io(config.APIURL, {
           transports: ['websocket'],
