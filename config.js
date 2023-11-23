@@ -3,13 +3,15 @@ const path = require('path');
 
 exports.APIURL = 'https://api.fullmetal.ai/';
 
-let dirname = typeof __dirname !== 'undefined' ? __dirname : '';
+const dirname = typeof __dirname !== 'undefined' ? __dirname : '';
+const accessToken =
+  typeof process !== 'undefined' ? process.env.ROLLBAR_ACCESS_TOKEN : '';
 
 if (dirname !== '') {
-  require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+  require('dotenv').config({ path: path.resolve(dirname, '.env') });
 }
 exports.rollbar = new Rollbar({
-  accessToken: process.env.ROLLBAR_ACCESS_TOKEN || '',
+  accessToken: accessToken,
   captureUncaught: true,
   captureUnhandledRejections: true,
 });

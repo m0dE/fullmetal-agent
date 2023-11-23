@@ -1,6 +1,6 @@
 {
   "name": "fullmetal-agent",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "This package is used to help Fullmetal API server with agents (nodes)",
   "main": "index.js",
   "scripts": {
