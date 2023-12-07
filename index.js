@@ -34,6 +34,9 @@ class Fullmetal {
         if (!options.ipAddress) {
           options.ipAddress = ip.address();
         }
+        if (!options.hasOwnProperty('isPublic')) {
+          options.isPublic = true;
+        }
         this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
         this.socket = io(config.APIURL, {
           transports: ['websocket'],
