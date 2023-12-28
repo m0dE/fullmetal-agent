@@ -192,5 +192,14 @@ class Fullmetal {
       console.log(error);
     }
   }
+
+  getSocket() {
+    try {
+      return this.socket;
+    } catch (error) {
+      config.rollbar.error(error);
+      console.log(error);
+    }
+  }
 }
 module.exports = Fullmetal;
