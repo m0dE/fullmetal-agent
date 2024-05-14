@@ -65,6 +65,13 @@ class Fullmetal {
           console.error('Reconnection error:', error);
         });
 
+        this.socket.on("connect_error", (error) => {
+          console.log(`connect_error due to ${error}`);
+          setTimeout(() => {
+            this.socket.connect();
+          }, 5000);
+        });
+
         this.socket.on('connect', (socket) => {
           console.log(`*******************************************`);
           console.log(
