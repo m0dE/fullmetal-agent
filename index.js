@@ -43,14 +43,15 @@ class Fullmetal {
           upgrade: false,
           path: '/socket.io/',
           forceNew: true,
-          reconnectionAttempts: 3,
           timeout: 2000,
           rejectUnauthorized: false,
           reconnection: true,
-          reconnectionAttempts: 5, // Number of reconnection attempts
+          reconnectionAttempts: Infinity, // Number of reconnection attempts
           reconnectionDelay: 1000, // Initial delay between reconnection attempts (in milliseconds)
           reconnectionDelayMax: 5000, // Maximum delay between reconnection attempts (in milliseconds)
           randomizationFactor: 0.5, // Randomization factor for reconnection delay
+          pingInterval: 30000, // Send ping every 30 seconds
+          pingTimeout: 120000, // Wait 120 seconds for a pong
         });
         this.socket.on('reconnect', (attemptNumber) => {
           console.log(`Reconnected after ${attemptNumber} attempts`);
@@ -65,7 +66,7 @@ class Fullmetal {
           console.error('Reconnection error:', error);
         });
 
-        this.socket.on("connect_error", (error) => {
+        this.socket.on('connect_error', (error) => {
           console.log(`connect_error due to ${error}`);
           setTimeout(() => {
             this.socket.connect();
@@ -92,17 +93,26 @@ class Fullmetal {
         this.socket.on('pong', (data) => {
           // console.log('Pong at', this.socket.id, data);
         });
+
+        this.socket.on('close', (socket) => {
+          config.rollbar.info(` ${new Date()} - Socket get closed`);
+          console.log(` ${new Date()} - Socket get closed`);
+          if (options.restartOnDisconnect) {
+            process.exit(1); // purposely restarting the app
+          }
+        });
+        this.socket.on('disconnect', (reason) => {
+          config.rollbar.info(
+            `${new Date()} - Disconnected from API server. Reason: ${reason}`
+          );
+          console.log(
+            ` ${new Date()} - Disconnected from API server. Reason: ${reason}`
+          );
+          if (options.restartOnDisconnect) {
+            process.exit(1); // purposely restarting the app
+          }
+        });
       }
-      this.socket.on('close', (socket) => {
-        config.rollbar.info(` ${new Date()} - Socket get closed`);
-        console.log(` ${new Date()} - Socket get closed`);
-        process.exit(1); // purposely restarting the app
-      });
-      this.socket.on('disconnect', (socket) => {
-        config.rollbar.info(` ${new Date()} - Disconnected from API server`);
-        console.log(` ${new Date()} - Disconnected from API server`);
-        process.exit(1); // purposely restarting the app
-      });
     } catch (error) {
       config.rollbar.error(error);
       console.log(error);
