@@ -7,9 +7,7 @@ class Fullmetal {
   constructor(options) {
     try {
       if (!options) {
-        throw new Error(
-          'Missing Configuration: You need to provide an apiKey, model, and agent name'
-        );
+        throw new Error('Missing Configuration: You need to provide an apiKey, model, and agent name');
       }
       if (!options.apiKey)
         throw new Error('Missing Configuration: apiKey is required');
@@ -21,22 +19,22 @@ class Fullmetal {
         ? options.isPublic
         : true;
 
-      this.secretKey = cryptoJs.lib.WordArray.random(32); // Generate a new secret key for each session
-      this.isReconnecting = false; // Track reconnection attempts
+      this.secretKey = cryptoJs.lib.WordArray.random(32);
+      this.isReconnecting = false;
 
       this.socket = io(config.APIURL, {
         transports: ['websocket'],
         upgrade: false,
         path: '/socket.io/',
-        timeout: 10000, // Increased timeout to avoid unnecessary reconnections
+        timeout: 10000,
         rejectUnauthorized: false,
         reconnection: true,
         reconnectionAttempts: Infinity,
-        reconnectionDelay: 5000,
-        reconnectionDelayMax: 30000,
+        reconnectionDelay: 5000, // Recommended: Start with 5 seconds
+        reconnectionDelayMax: 30000, // Maximum backoff delay of 30 seconds
         randomizationFactor: 0.5,
         pingInterval: 25000, // Ping every 25 seconds
-        pingTimeout: 60000, // Wait 60 seconds for a pong before closing
+        pingTimeout: 60000, // Wait 60 seconds for pong
       });
 
       this.setupSocketEvents(options);
@@ -51,7 +49,7 @@ class Fullmetal {
       console.log(`*******************************************`);
       console.log(`Connected to API server with ${this.socket.id} socketId`);
       console.log(`*******************************************`);
-      this.isReconnecting = false; // Reset reconnection flag
+      this.isReconnecting = false;
       this.authenticate({ userType: 'agent', options });
       this.isReady(true);
     });
@@ -63,7 +61,7 @@ class Fullmetal {
       config.rollbar.info(`${new Date()} - Disconnected. Reason: ${reason}`);
 
       if (options.restartOnDisconnect) {
-        process.exit(1); // Restart the app
+        process.exit(1);
       }
     });
 
@@ -113,6 +111,48 @@ class Fullmetal {
   isReady(status) {
     try {
       this.socket.emit('agentIsReady', status);
+    } catch (error) {
+      config.rollbar.error(error);
+      console.error(error);
+    }
+  }
+
+  /**
+   * Listens for 'prompt' events from the server
+   * @param {Function} cb - Callback function to handle the prompt event
+   */
+  onPrompt(cb) {
+    try {
+      this.socket.on('prompt', cb);
+    } catch (error) {
+      config.rollbar.error(error);
+      console.error(error);
+    }
+  }
+
+  /**
+   * Sends response data back to the server
+   * @param {Object} response - The response object {token, completed, speed, model}
+   */
+  sendResponse(response) {
+    try {
+      this.socket.emit('response', response);
+      if (response.completed) {
+        this.isReady(true);
+      }
+    } catch (error) {
+      config.rollbar.error(error);
+      console.error(error);
+    }
+  }
+
+  onError(cb) {
+    try {
+      this.socket.on('error', (error) => {
+        config.rollbar.error(error);
+        cb(error);
+        console.error(error);
+      });
     } catch (error) {
       config.rollbar.error(error);
       console.error(error);
