@@ -26,15 +26,15 @@ class Fullmetal {
         transports: ['websocket'],
         upgrade: false,
         path: '/socket.io/',
-        timeout: 10000,
+        timeout: 20000,
         rejectUnauthorized: false,
         reconnection: true,
         reconnectionAttempts: Infinity,
-        reconnectionDelay: 5000, // Recommended: Start with 5 seconds
-        reconnectionDelayMax: 30000, // Maximum backoff delay of 30 seconds
+        reconnectionDelay: 5000,
+        reconnectionDelayMax: 30000,
         randomizationFactor: 0.5,
-        pingInterval: 25000, // Ping every 25 seconds
-        pingTimeout: 60000, // Wait 60 seconds for pong
+        pingInterval: 30000, // Send ping every 30 seconds
+        pingTimeout: 90000, // Wait 90 seconds before considering the connection dead
       });
 
       this.setupSocketEvents(options);
