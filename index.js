@@ -131,6 +131,19 @@ class Fullmetal {
   }
 
   /**
+   * Listens for 'availabilityCredit' events from the server
+   * @param {Function} cb - Callback function to handle the availabilityCredit event
+   */
+  onAvailabilityCredit(cb) {
+    try {
+      this.socket.on('availabilityCredit', cb);
+    } catch (error) {
+      config.rollbar.error(error);
+      console.error(error);
+    }
+  }
+
+  /**
    * Sends response data back to the server
    * @param {Object} response - The response object {token, completed, speed, model}
    */
